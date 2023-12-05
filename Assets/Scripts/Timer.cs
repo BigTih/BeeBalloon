@@ -5,38 +5,33 @@ using TMPro;
 
 public class Timer : MonoBehaviour
 {
-    public Slider timerSlider;
-    public TMP_Text timerText;
-    public float gameTime;
+    public TextMeshProUGUI timerText; // Assign this in the inspector
+    public float timeRemaining = 400; // Set your countdown time in seconds here
 
-    private bool stopTimer;
-    // Start is called before the first frame update
-    void Start()
+    private void Update()
     {
-        stopTimer = false;
-        timerSlider.maxValue = gameTime;
-        timerSlider.value = gameTime;
+        if (timeRemaining > 0)
+        {
+            timeRemaining -= Time.deltaTime;
+            UpdateTimerDisplay(timeRemaining);
+        }
+        else
+        {
+            timerText.text = "0:00";
+            // Optionally add any actions that should happen when the timer ends
+        }
     }
 
-    // Update is called once per frame
-    void Update()
+    void UpdateTimerDisplay(float timeToDisplay)
     {
-        float time = gameTime - Time.time;
-
-        int minutes = Mathf.FloorToInt(time / 60);
-        int seconds = Mathf.FloorToInt(time - minutes * 60f);
-
-        string textTime = string.Format("Time Remaining: {0:0}:{1:00}", minutes, seconds);
-
-        if (time <= 0)
+        if (timeToDisplay < 0)
         {
-            stopTimer = true;
+            timeToDisplay = 0;
         }
 
-        if (stopTimer == false)
-        {
-            timerText.text = textTime;
-            timerSlider.value = time;
-        }
+        int minutes = Mathf.FloorToInt(timeToDisplay / 60);
+        int seconds = Mathf.FloorToInt(timeToDisplay % 60);
+
+        timerText.text = string.Format("{0}:{1:00}", minutes, seconds);
     }
 }
