@@ -5,98 +5,106 @@ using UnityEngine.SceneManagement;
 
 public class Bee : MonoBehaviour
 {
-    static public Bee S;
 
     [Header("Set These")]
-    public float speed = 1;
+    public float moveSpeed = 3;
+    public GameObject Walls;
 
     [Header("Already Set")]
-    private Rigidbody rb;
-    private Vector3[] moves;
-    private KeyCode[] arrows = new KeyCode[] {KeyCode.LeftArrow, KeyCode.RightArrow, KeyCode.UpArrow, KeyCode.DownArrow};
-    private KeyCode[] keys = new KeyCode[] {KeyCode.A, KeyCode.D, KeyCode.W, KeyCode.S};
-    
-    private int facing = 1;
-    /// <summary>
-    /// My Code
-    /// </summary>
-    private bool isDragging = false;
+    //private bool isDragging = false;
     private Vector3 offset;
+    private Vector3 targetPosition;
+    private Vector3 bounds;
+
+    private static readonly HashSet<Transform> WallSet = new HashSet<Transform>();
+
+    void Awake()
+    {
+        foreach(Transform wall in Walls.transform)
+        {
+            WallSet.Add(wall);
+        }
+    }
+
+    void OnDestroy()
+    {
+        foreach (Transform wall in Walls.transform)
+        {
+            WallSet.Remove(wall);
+        }
+    }
 
     void Start()
     {
-        S = this;
-        rb = GetComponent<Rigidbody>();
-        moves = new Vector3[] {new Vector3(-speed, 0, 0), new Vector3(speed, 0, 0), new Vector3(0, speed, 0), new Vector3(0, -speed, 0)};
-        
-    }
-
-    private void OnMouseDown()
-    {
-        // When the mouse button is pressed over the object, start dragging.
-        isDragging = true;
-        offset = transform.position - GetMouseWorldPosition();
-    }
-
-    private void OnMouseUp()
-    {
-        // When the mouse button is released, stop dragging.
-        isDragging = false;
+        // Initialize the target position to the object's current position.
+        targetPosition = transform.position;
     }
 
     private void Update()
     {
-        /*int keyMove = -1;
+        // If not dragging, smoothly move towards the target position.
+        transform.position = Vector3.Lerp(transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
-        for(int i = 0; i < 4; i++) {
-            if(Input.GetKey(arrows[i])) keyMove = i;
-            if(Input.GetKey(keys[i])) keyMove = i;
-        }
+        // Update the target position based on the mouse position.
+        targetPosition = GetMouseWorldPosition();
 
-        Vector3 basis = Vector3.zero;
+        // Call function to find the closest wall to the bee object
+        GameObject wall = ClosestWall();
 
-        if(keyMove > -1) {
-            if (keyMove == 0 && facing == 1){
-                facing = -1;
-                transform.rotation = Quaternion.Euler(0, 0, 0);
-            }
-            else if (keyMove == 1 && facing == -1){
-                facing = 1;
-                transform.rotation = Quaternion.Euler(0, 0, 180);
-            }
-            basis = moves[keyMove];
-            rb.velocity = speed * basis;
-        }
-        else{
-            rb.velocity = basis;
-        }*/
+        Vector3 boundsCheck = transform.position;
 
-        if (isDragging)
+        // Only clamp the values that are given from the closest wall depending on if it is a vertical wall or horizontal
+        if (wall.transform.eulerAngles.z == 90)
         {
-            // Continuously move the object while dragging.
-            Vector3 targetPosition = GetMouseWorldPosition() + offset;
-            transform.position = targetPosition;
+            if (transform.position.y < wall.transform.position.y)
+            {
+                boundsCheck.y = Mathf.Clamp(boundsCheck.y, -7, wall.transform.position.y);
+            }
+            else
+            {
+                boundsCheck.y = Mathf.Clamp(boundsCheck.y, wall.transform.position.y, 12);
+            }
         }
+        else
+        {
+            if (transform.position.x < wall.transform.position.x)
+            {
+                boundsCheck.x = Mathf.Clamp(boundsCheck.x, -9.5f, wall.transform.position.x);
+            }
+            else
+            {
+                boundsCheck.x = Mathf.Clamp(boundsCheck.x, wall.transform.position.x, 9.5f);
+            }
+        }
+
+        transform.position = boundsCheck;
     }
 
     private Vector3 GetMouseWorldPosition()
     {
         // Get the mouse position in the world space.
         Vector3 mousePosition = Input.mousePosition;
-        mousePosition.z = Camera.main.nearClipPlane;
+        mousePosition.z = Camera.main.nearClipPlane + 9.7f;
         return Camera.main.ScreenToWorldPoint(mousePosition);
     }
 
-    void OnCollisionEnter(Collision coll) {
-        if(coll.gameObject.tag == "redboxofdoom" || coll.gameObject.tag == "bomb") {
-            //Destroy(this.gameObject);
-            SceneManager.LoadScene("SampleScene");
+    // Loops through wall hash set to find the closest current wall to the bee object
+    private GameObject ClosestWall()
+    {
+        GameObject closest = null;
+        float minDistance = Mathf.Infinity;
+        Vector3 currentPosition = transform.position;
+
+        foreach (Transform obj in WallSet)
+        {
+            float distance = Vector3.Distance(obj.position, currentPosition);
+            if (distance < minDistance)
+            {
+                closest = obj.gameObject;
+                minDistance = distance;
+            }
         }
 
-        if (coll.gameObject.CompareTag("wall"))
-        {
-            // If it collided with an object tagged as "wall," stop dragging.
-            isDragging = false;
-        }
+        return closest;
     }
 }
