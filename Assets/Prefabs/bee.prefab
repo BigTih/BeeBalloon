@@ -179,7 +179,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5b3fc7143ed0d2f48b97cfc07bb56891, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speed: 3
+  moveSpeed: 3
+  Walls: {fileID: 5380224381340696522, guid: 81ccdf21704d887459892df8eed4b9df, type: 3}
+  lives: 3
+  timerText: {fileID: 0}
+  livesText: {fileID: 0}
+  scoreText: {fileID: 0}
 --- !u!1 &7121905487959261411
 GameObject:
   m_ObjectHideFlags: 0

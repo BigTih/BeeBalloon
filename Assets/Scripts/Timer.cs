@@ -6,19 +6,24 @@ using TMPro;
 public class Timer : MonoBehaviour
 {
     public TextMeshProUGUI timerText; // Assign this in the inspector
-    public float timeRemaining = 400; // Set your countdown time in seconds here
+    public float timeRemaining = 10; // Set your countdown time in seconds here
+
+    private bool timer = true;
 
     private void Update()
     {
-        if (timeRemaining > 0)
+        if (timer)
         {
-            timeRemaining -= Time.deltaTime;
-            UpdateTimerDisplay(timeRemaining);
-        }
-        else
-        {
-            timerText.text = "0:00";
-            // Optionally add any actions that should happen when the timer ends
+            if (timeRemaining > 0)
+            {
+                timeRemaining -= Time.deltaTime;
+                UpdateTimerDisplay(timeRemaining);
+            }
+            else
+            {
+                timerText.text = "0:00";
+                // Optionally add any actions that should happen when the timer ends
+            }
         }
     }
 
@@ -34,4 +39,10 @@ public class Timer : MonoBehaviour
 
         timerText.text = string.Format("{0}:{1:00}", minutes, seconds);
     }
+
+    public void StopTimer()
+    {
+        timer = false;
+    }
+
 }
