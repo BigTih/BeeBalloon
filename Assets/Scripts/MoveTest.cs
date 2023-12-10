@@ -25,5 +25,6 @@ public class MoveTest : MonoBehaviour
             thisTransform.position = Vector3.Lerp(startPos, endPos, i);
             yield return null;
         }
+        
     }
 }

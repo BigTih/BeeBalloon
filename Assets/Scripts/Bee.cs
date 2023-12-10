@@ -10,42 +10,33 @@ public class Bee : MonoBehaviour
 
     [Header("Set These")]
     public float moveSpeed = 3;
-    public GameObject Walls;
-    public int lives = 3;
+    public static int lives = 3;
 
-    public TextMeshProUGUI timerText;
     public TextMeshProUGUI livesText;
-    public Slider scoreText;
     public GameObject GameOverScreen;
+    public GameObject Balloons;
 
     [Header("Already Set")]
-    //private bool isDragging = false;
     private Vector3 offset;
     private Vector3 targetPosition;
     private Vector3 bounds;
     private Vector3 spawnPoint;
     private bool isDragging = false;
+    private Vector3 boundsCheck;
+    private int layerMask;
+    private static int level = 1;
 
-    private Timer timeRemaining;
     private LivesScript livesScript;
-    private ScoreSlider scoreSlider;
     private GameOver gameOver;
-    
-    private static readonly HashSet<Transform> WallSet = new HashSet<Transform>();
+
+    // To track how many balloons are on screen
+    private HashSet<Transform> BalloonSet = new HashSet<Transform>();
 
     void Awake()
     {
-        foreach(Transform wall in Walls.transform)
+        foreach(Transform balloon in Balloons.transform)
         {
-            WallSet.Add(wall);
-        }
-    }
-
-    void OnDestroy()
-    {
-        foreach (Transform wall in Walls.transform)
-        {
-            WallSet.Remove(wall);
+            BalloonSet.Add(balloon);
         }
     }
 
@@ -54,69 +45,78 @@ public class Bee : MonoBehaviour
         // Initialize the target position to the object's current position.
         targetPosition = transform.position;
         spawnPoint = transform.position;
-        timeRemaining = timerText.GetComponent<Timer>();
         livesScript = livesText.GetComponent<LivesScript>();
-        scoreSlider = scoreText.GetComponent<ScoreSlider>();
         gameOver = GameOverScreen.GetComponent<GameOver>();
+
+        // For detecting when the cursor is on the other side of the wall
+        layerMask = 1 << 6;
     }
 
     private void Update()
     {
         livesScript.SetLives(lives);
-
-        if (lives > 0 && timeRemaining.timeRemaining>0)
+        Timer.StartTimer();
+        if (lives > 0 && Timer.timeRemaining > 0)
         {
             if (isDragging)
             {
-                // If not dragging, smoothly move towards the target position.
+                // Smoothly move towards the target position.
                 transform.position = Vector3.Lerp(transform.position, targetPosition, moveSpeed * Time.deltaTime);
 
                 // Update the target position based on the mouse position.
                 targetPosition = GetMouseWorldPosition();
 
-                // Call function to find the closest wall to the bee object
-                GameObject wall = ClosestWall();
-
-                Vector3 boundsCheck = transform.position;
-
-                // Only clamp the values that are given from the closest wall depending on if it is a vertical wall or horizontal
-                if (wall.transform.eulerAngles.z == 90)
+                RaycastHit hit;
+                if (Physics.Raycast(transform.position, targetPosition - transform.position, out hit, Vector3.Distance(transform.position, targetPosition), layerMask))
                 {
-                    if (transform.position.y < wall.transform.position.y)
-                    {
-                        boundsCheck.y = Mathf.Clamp(boundsCheck.y, -7, wall.transform.position.y);
-                    }
-                    else
-                    {
-                        boundsCheck.y = Mathf.Clamp(boundsCheck.y, wall.transform.position.y, 12);
-                    }
+                    // If a wall is hit, adjust the target position to the hit point
+                    targetPosition = hit.point;
                 }
                 else
                 {
-                    if (transform.position.x < wall.transform.position.x)
-                    {
-                        boundsCheck.x = Mathf.Clamp(boundsCheck.x, -9.5f, wall.transform.position.x);
-                    }
-                    else
-                    {
-                        boundsCheck.x = Mathf.Clamp(boundsCheck.x, wall.transform.position.x, 9.5f);
-                    }
+                    targetPosition = GetMouseWorldPosition();
                 }
-
-                transform.position = boundsCheck;
             }
         }
         else
         {
-            if(lives == 0)
+            // Different prompts for different kind of game over possibilities
+            if (lives == 0)
             {
                 gameOver.SetUp("You ran out of lives");
             }
-            else if(timeRemaining.timeRemaining < 1)
+            else if (Timer.timeRemaining < 1)
             {
                 gameOver.SetUp("You ran out of time");
             }
-            timeRemaining.StopTimer();
+            Time.timeScale = 0f;
+        }
+
+        // Changes level to correct one following all balloons being popped
+        if(BalloonSet.Count == 0)
+        {
+            switch(level)
+            {
+                case 1:
+                    SceneManager.LoadScene("Level2");
+                    level++;
+                    break;
+
+                case 2:
+                    SceneManager.LoadScene("Level3");
+                    level++;
+                    break;
+
+                case 3:
+                    SceneManager.LoadScene("Level4");
+                    level++;
+                    break;
+
+                case 4:
+                    gameOver.SetUp("You won the game!");
+                    Time.timeScale = 0f;
+                    break;
+            }
         }
     }
 
@@ -134,25 +134,6 @@ public class Bee : MonoBehaviour
         return Camera.main.ScreenToWorldPoint(mousePosition);
     }
 
-    // Loops through wall hash set to find the closest current wall to the bee object
-    private GameObject ClosestWall()
-    {
-        GameObject closest = null;
-        float minDistance = Mathf.Infinity;
-        Vector3 currentPosition = transform.position;
-
-        foreach (Transform obj in WallSet)
-        {
-            float distance = Vector3.Distance(obj.position, currentPosition);
-            if (distance < minDistance)
-            {
-                closest = obj.gameObject;
-                minDistance = distance;
-            }
-        }
-        return closest;
-    }
-
     void OnCollisionEnter(Collision collision)
     {
         GameObject collider = collision.gameObject;
@@ -167,9 +148,32 @@ public class Bee : MonoBehaviour
         }
         else if(collider.tag == "balloon")
         {
-            scoreSlider.score++;
+            ScoreSlider.score++;
+            BalloonSet.Remove(collider.transform);
             Destroy(collider);
         }
     }
 
+    // Time scale is set to zero when pause button is clicked, everything in game freezes
+    public void pauseGame()
+    {
+        if (Time.timeScale == 1f)
+        {
+            Time.timeScale = 0f;
+        }
+        else
+        {
+            Time.timeScale = 1f;
+        }
+    }
+
+    // Used for both start game and after game over
+    public void restart()
+    {
+        SceneManager.LoadScene("Level1");
+        lives = 3;
+        ScoreSlider.score = 0;
+        Timer.timeRemaining = 240;
+        Time.timeScale = 1f;
+    }
 }

@@ -8,11 +8,10 @@ public class ScoreSlider : MonoBehaviour
 {
     public Slider scoreSlider;
     public TextMeshProUGUI scoreText;
-    public int score = 0;
+    public static int score = 0;
 
     void Start()
     {
-        score = 0;
         scoreSlider.maxValue = 100;
     }
 

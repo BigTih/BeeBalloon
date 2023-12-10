@@ -166,7 +166,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 120
-  m_CollisionDetection: 0
+  m_CollisionDetection: 1
 --- !u!114 &3403391013432907826
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -180,11 +180,12 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moveSpeed: 3
-  Walls: {fileID: 5380224381340696522, guid: 81ccdf21704d887459892df8eed4b9df, type: 3}
+  Walls: {fileID: 0}
   lives: 3
   timerText: {fileID: 0}
   livesText: {fileID: 0}
   scoreText: {fileID: 0}
+  GameOverScreen: {fileID: 0}
 --- !u!1 &7121905487959261411
 GameObject:
   m_ObjectHideFlags: 0

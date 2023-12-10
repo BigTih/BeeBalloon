@@ -6,9 +6,9 @@ using TMPro;
 public class Timer : MonoBehaviour
 {
     public TextMeshProUGUI timerText; // Assign this in the inspector
-    public float timeRemaining = 10; // Set your countdown time in seconds here
+    public static float timeRemaining = 240; // Set your countdown time in seconds here
 
-    private bool timer = true;
+    private static bool timer = true;
 
     private void Update()
     {
@@ -40,9 +40,14 @@ public class Timer : MonoBehaviour
         timerText.text = string.Format("{0}:{1:00}", minutes, seconds);
     }
 
-    public void StopTimer()
+    public static void StopTimer()
     {
         timer = false;
+    }
+
+    public static void StartTimer()
+    {
+        timer = true;
     }
 
 }
