@@ -74,10 +74,6 @@ public class Bee : MonoBehaviour
                     // If a wall is hit, adjust the target position to the hit point
                     targetPosition = hit.point;
                 }
-                else
-                {
-                    targetPosition = GetMouseWorldPosition();
-                }
             }
         }
         else
