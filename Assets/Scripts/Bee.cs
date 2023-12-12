@@ -83,7 +83,7 @@ public class Bee : MonoBehaviour
         else
         {
             // Different prompts for different kind of game over possibilities
-            if (lives == 0)
+            if (lives < 1)
             {
                 gameOver.SetUp("You ran out of lives");
             }
